@@ -4,9 +4,9 @@
 
 //create a socket connection
 var socket;
-var world = new World();
-var myMouse = new Mouse(100,100);
-var myID = -1;
+var mice = {};
+var myMouse = {x:100, y:100, isClicked: false, isDead: false};
+var myID = Math.floor(Math.random() * 100000);
 
 function setup() {
     //create a canvas
@@ -19,60 +19,62 @@ function setup() {
         autoConnect: false
     });
 
-    //detects a server connection 
-    socket.on('connect', onConnect);
-    //handles the messages from the server, the parameter is a string
+    socket.on('init', initMice);
     socket.on('message', onMessage);
-    //handles the user action broadcast by the server, the parameter is an object
-    socket.on('action', onAction);
+    socket.on('updateMice', updateMice);
 
     socket.open();
-
-    myID = world.generateID();
 }
 
 //this function is called continuously
 function draw() {
+    background(0);
+    for(id in mice){
+        let x = mice[id].x;
+        let y = mice[id].y;
+        fill('red');
+        if(mice[id].isClicked) fill('blue');
+        ellipse(x,y,20,20);
+    }
 }
 
 function mouseMoved(){
+    myMouse.x = mouseX;
+    myMouse.y = mouseY;
+    if(socket.id){
+        socket.emit('update',{id: myID, mouse: myMouse}); 
+    }
     // socket.emit('clientAction', {type: 'move', x: mouseX, y: mouseY });
 }
 
 //p5 function called on mouse press - send coordinates to server
 function mousePressed() {
-    //make sure the connection is established
-    // if (socket.id) {
-    //     // console.log("Mouse pressed at " + mouseX + " " + mouseY);
-    //     //send 
-    //     socket.emit('mouseClicked', {type: 'click', x: mouseX, y: mouseY });
-    // }
-}
-
-
-
-//called by the server upon any user action including me
-function onAction(obj) {
-    //change fill color to black
-    // background('black');
-    // if(obj.type == 'click') fill(255, 255, 255);
-    // else{
-    //     console.log('moved');
-    //     fill(255,0,0);
-    // }
-    // //draw a circle
-    // ellipse(obj.x, obj.y, 40, 40);
-    console.log(obj);
-}
-
-//connected to the server
-function onConnect() {
-    if (socket.id) {
-        console.log("Connected to the server");
+    myMouse.isClicked = true;
+    if(socket.id){
+        socket.emit('update',{id: myID, mouse: myMouse}); 
     }
 }
 
-//a message from the server
+function mouseReleased(){
+    myMouse.isClicked = false;
+    if(socket.id){
+        socket.emit('update',{id: myID, mouse: myMouse}); 
+    }
+}
+
+function initMice(data){
+    if (socket.id) {
+        mice = data;
+        mice[myID] = myMouse;
+        socket.emit('update',{id: myID, mouse: myMouse});
+    }
+}
+
+function updateMice(data){
+    mice[data.id] = data.mouse;
+    console.log(mice);
+}
+
 function onMessage(msg) {
     if (socket.id) {
         console.log("Message from server: " + msg);

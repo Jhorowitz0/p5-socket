@@ -17,6 +17,7 @@ var express = require('express');
 var app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
+var mice = {};
 
 //when a client connects serve the static files in the public directory ie public/index.html
 app.use(express.static('public'));
@@ -27,12 +28,17 @@ io.on('connection', function (socket) {
     console.log('A user connected');
 
     //this is sent to the client upon connection
-    socket.emit('message', 'Hello welcome!');
+    socket.emit('message', "hello!");
+    socket.emit('init', mice);
+
+    socket.on('update', data =>{
+        io.emit('updateMice',data);
+    })
 
     //when a client performs an action...
-    socket.on('mouseClicked', obj =>{
-        io.emit('action',obj);
-    });
+    // socket.on('mouseClicked', obj =>{
+    //     io.emit('action',obj);
+    // });
 });
 
 
