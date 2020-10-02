@@ -30,17 +30,8 @@ io.on('connection', function (socket) {
     socket.emit('message', 'Hello welcome!');
 
     //when a client performs an action...
-    socket.on('clientAction', function (obj) {
-
-        //I log it on the console
-        console.log("A client pressed at " + obj.x + "," + obj.y);
-
-        //and send it to all clients
-        io.emit('action', obj);
-
-        //sending to all clients except sender
-        socket.broadcast.emit("message", "It wasn't you!");
-
+    socket.on('mouseClicked', obj =>{
+        io.emit('action',obj);
     });
 });
 
